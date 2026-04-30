@@ -1,0 +1,148 @@
+
+<style>
+.mc{border-radius:6px;padding:7px 4px;cursor:pointer;font-size:10px;line-height:1.5;border:1.5px solid transparent;text-align:center;display:flex;align-items:center;justify-content:center;min-height:60px;transition:all .12s;}
+.mc:hover{opacity:.85;transform:scale(1.03);}
+.mc.sel{border-color:var(--color-text-primary);box-shadow:0 0 0 1px var(--color-text-primary);}
+.z-c{background:#F1EFE8;color:#2C2C2A;}
+.z-g{background:#FAEEDA;color:#412402;}
+.z-h{background:#E1F5EE;color:#04342C;}
+.z-e{background:#EEF0EE;color:#5F5E5A;font-style:italic;}
+.bd{display:inline-block;padding:2px 9px;border-radius:4px;font-size:11px;font-weight:500;}
+.bd-c{background:#D3D1C7;color:#2C2C2A;}
+.bd-g{background:#FAC775;color:#412402;}
+.bd-h{background:#9FE1CB;color:#04342C;}
+@media(prefers-color-scheme:dark){
+.z-c{background:#2C2C2A;color:#D3D1C7;}
+.z-g{background:#412402;color:#FAC775;}
+.z-h{background:#085041;color:#9FE1CB;}
+.z-e{background:#1a1a1a;color:#5F5E5A;}
+.bd-c{background:#444441;color:#D3D1C7;}
+.bd-g{background:#633806;color:#FAC775;}
+.bd-h{background:#085041;color:#9FE1CB;}
+}
+</style>
+
+<h2 class="sr-only">CIOSH 展会品类断层图谱 — 8大PPE品类×4能级矩阵，标注现有展区、断层白地机会区、垂直行业高端三个区域，点击格子查看详情</h2>
+
+<div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;font-size:12px;color:var(--color-text-secondary);align-items:center;">
+  <span style="display:flex;align-items:center;gap:5px;"><span style="width:11px;height:11px;border-radius:3px;background:#B4B2A9;display:inline-block;"></span>CIOSH 现有</span>
+  <span style="display:flex;align-items:center;gap:5px;"><span style="width:11px;height:11px;border-radius:3px;background:#FAC775;display:inline-block;"></span>断层白地 · 机会区</span>
+  <span style="display:flex;align-items:center;gap:5px;"><span style="width:11px;height:11px;border-radius:3px;background:#5DCAA5;display:inline-block;"></span>垂直高端（暂未进入）</span>
+</div>
+
+<div id="g"></div>
+
+<div id="dp" style="background:var(--color-background-secondary);border-radius:var(--border-radius-lg);padding:16px;margin-top:10px;min-height:78px;">
+  <div style="color:var(--color-text-secondary);font-size:12px;text-align:center;padding:14px 0;">← 点击任意格查看详细分析</div>
+</div>
+
+<script>
+const cats=['防坠落','呼吸防护','听力防护','眼面防护','手部防护','躯体防护','足部防护','数字化安全'];
+const tiers=[
+  {id:'T4',l:'T4 顶端',s:'垂直高端'},
+  {id:'T3',l:'T3 高端',s:'断层核心 ⭐'},
+  {id:'T2',l:'T2 中端',s:'断层边界'},
+  {id:'T1',l:'T1 基础',s:'CIOSH现有'}
+];
+const zc={c:'z-c',g:'z-g',h:'z-h',e:'z-e'};
+const zb={c:'bd-c',g:'bd-g',h:'bd-h',e:'bd-c'};
+const zl={c:'CIOSH 现有展区',g:'断层白地 · 机会区',h:'垂直行业高端（暂未进入）',e:'CIOSH 空白缺口'};
+
+const D={
+  '防坠落':{
+    T4:{z:'h',n:'轨道导向\n防坠系统',p:'风电轨道导向系统、永久性导轨防坠装置',b:'风电整机商、大型建设方',note:'系统集成商才能进入，非单品展商'},
+    T3:{z:'g',n:'智能防坠\n自动制动',p:'自动回收式制动器LADS、IoT安全带实时监测',b:'风电运维、电信铁塔、石油平台',note:'GB/T 6095升级推动需求，价格带5000–50000元/套'},
+    T2:{z:'g',n:'双绳缓冲\n认证系统',p:'EN355认证缓冲绳、Y型/A型缓冲缩绳器',b:'中高端建筑工地、化工厂',note:'有认证壁垒，是CIOSH可进入的第一梯队'},
+    T1:{z:'c',n:'基础安全\n带/绳',p:'普通全身安全带、简易防坠器、安全绳',b:'低端建筑工地、一般制造业',note:'价格战激烈，展商数量最多，100–500元/件'}
+  },
+  '呼吸防护':{
+    T4:{z:'h',n:'正压供气\nSCBA',p:'正压式空气呼吸器、核工业专用呼吸器',b:'核电、消防HAZMAT',note:'资质/认证门槛极高，专业渠道，非CIOSH展商'},
+    T3:{z:'g',n:'电动送风\nPAPR',p:'电动送风过滤式呼吸器、正压头盔式呼吸器',b:'制药、半导体、危险化工',note:'高价高毛利，是呼吸防护品类最大机会点'},
+    T2:{z:'g',n:'全面罩+\n多类型滤盒',p:'可更换滤盒全面罩（A/B/E类）、化工级半面罩',b:'化工、喷漆、农药作业',note:'有危险品场景要求，可从细分行业切入'},
+    T1:{z:'c',n:'KN95/\n基础半面罩',p:'KN95/KN100口罩、简单粉尘半面罩',b:'制造业普通岗位',note:'疫情后量大价低，同质化严重'}
+  },
+  '听力防护':{
+    T4:{z:'h',n:'工业通讯\n一体系统',p:'头盔+通讯+降噪三合一集成系统',b:'航空地勤、军工、矿山指挥',note:'定制化系统，交付周期长，小众'},
+    T3:{z:'g',n:'主动降噪\n通讯耳机',p:'电子耳罩（爆破专用）、对讲集成主动降噪耳机',b:'矿山、爆破作业、石油钻井',note:'电子元件附加值高，是听力防护最大升级空间'},
+    T2:{z:'g',n:'高SNR\n通讯耳罩',p:'SNR30+高衰减耳罩、带通讯接口被动耳罩',b:'建筑、重工业',note:'功能升级有差异化，门槛适中'},
+    T1:{z:'c',n:'泡棉耳塞\n基础耳罩',p:'一次性泡棉耳塞、基础被动耳罩',b:'普通制造业、工厂',note:'无差异化，量大价低'}
+  },
+  '眼面防护':{
+    T4:{z:'h',n:'AR工业\n智能眼镜',p:'AR安全智能眼镜（HMT级别工业AR）',b:'智能制造、工业4.0场景',note:'非传统PPE，与数字化安全品类重叠'},
+    T3:{z:'g',n:'变光面罩\n激光防护',p:'自动变光焊接面罩（DIN9-13）、激光防护眼镜',b:'高精度焊接、激光加工、科研院所',note:'技术差异化强，竞争相对少'},
+    T2:{z:'g',n:'认证安全镜\n化学防溅',p:'防冲击认证安全眼镜（EN166）、化学防溅密封眼镜',b:'实验室、化工厂',note:'有场景化差异，进入壁垒适中'},
+    T1:{z:'c',n:'普通防护\n眼镜/面罩',p:'普通PC防护眼镜、简易焊接面罩、透明面屏',b:'加工制造业通用',note:'同质化严重'}
+  },
+  '手部防护':{
+    T4:{z:'h',n:'核工业\n化工厚手套',p:'化工正压防护手套、核工业铅衬防护手套',b:'核电、危险化工极少数岗位',note:'系统配套，小众，专业渠道流通'},
+    T3:{z:'g',n:'极端环境\n专用手套',p:'A9级5级切割手套、极高温(200℃+)/极低温手套',b:'玻璃制造、钢铁冶炼、食品冷冻',note:'技术门槛高，毛利好，手部防护最值得突破的方向'},
+    T2:{z:'g',n:'EN388切割\n耐化学品',p:'EN388 B/C级切割手套、耐油耐化学品手套',b:'金属加工、化工',note:'有认证要求，有一定壁垒'},
+    T1:{z:'c',n:'棉布/乳胶\n皮手套',p:'棉布手套、乳胶手套、丁腈手套、普通皮手套',b:'全行业通用',note:'展商最多、竞争最激烈、毛利最低的品类'}
+  },
+  '躯体防护':{
+    T4:{z:'h',n:'CBRN\n密封防护服',p:'Type 1-3化学防护密封服、CBRN连体防护服',b:'消防HAZMAT、核应急响应',note:'极小众，高单价，非CIOSH目标展商'},
+    T3:{z:'g',n:'弧光防护\nIII级高可见',p:'防弧光服（Arc Rating 8+ cal/cm²）、III级高能见度服',b:'电力维修、公路/铁路施工',note:'弧光防护是国内新兴品类，监管升级中，先手机会'},
+    T2:{z:'g',n:'阻燃FR\n防静电ESD',p:'FR Class 1/2阻燃服、防静电服ESD分级认证',b:'电力、石油化工',note:'EN/GB认证要求，进入壁垒适中，市场成熟'},
+    T1:{z:'c',n:'普通劳保服\n反光背心',p:'棉劳保服、普通反光背心、基础防静电服',b:'全行业通用',note:'大量中小服装厂，价格竞争激烈'}
+  },
+  '足部防护':{
+    T4:{z:'h',n:'智能安全鞋\n消防靴',p:'传感器内嵌智能安全鞋、EN15090消防靴',b:'智能安全场景、消防',note:'定制+数字化赛道，量小'},
+    T3:{z:'g',n:'绝缘鞋\n化学防护靴',p:'电力绝缘安全鞋（带电压等级认证）、耐强酸碱化学防护靴',b:'电力行业、化工',note:'认证壁垒强，岗位不可替代，足部防护优先突破点'},
+    T2:{z:'g',n:'ESD导静电\nS3防穿刺',p:'导静电安全鞋ESD、防穿刺中底S3级安全鞋',b:'电子制造、金属加工',note:'有认证场景要求，门槛适中'},
+    T1:{z:'c',n:'普通安全鞋\nGB基础款',p:'普通安全鞋GB12011基础款、防滑工作靴',b:'制造业通用',note:'大量国内厂商，价格战'}
+  },
+  '数字化安全':{
+    T4:{z:'h',n:'AI视觉\n数字孪生',p:'AI摄像头行为识别系统、全厂安全数字孪生平台',b:'智能制造、大型石化',note:'非传统PPE，属工业互联网范畴，CIOSH目前无法承接'},
+    T3:{z:'g',n:'IoT穿戴\nRTLS定位',p:'IoT智能安全帽（多合一传感器）、人员实时定位RTLS、复合气体检测仪',b:'危化品企业、矿山、大型建筑工地',note:'增长最快品类，政策强驱动，是CIOSH数字化突破的核心入口'},
+    T2:{z:'g',n:'便携气检\n基础RFID',p:'单气体/双气体便携检测仪、基础RFID人员定位系统',b:'化工、矿山、有限空间作业',note:'合规驱动，采购量稳定，进入门槛较低'},
+    T1:{z:'e',n:'⚠ 基本\n空白',p:'偶有简单固定式报警器展商，无体系化品类',b:'无稳定受众群体',note:'CIOSH最大的结构性缺口之一，先手进入无历史包袱'}
+  }
+};
+
+const g=document.getElementById('g');
+g.style.cssText='display:grid;grid-template-columns:64px repeat(8,1fr);gap:3px;';
+
+const empt=document.createElement('div');
+g.appendChild(empt);
+cats.forEach(c=>{
+  const d=document.createElement('div');
+  d.style.cssText='font-size:9.5px;font-weight:500;color:var(--color-text-secondary);text-align:center;padding:0 2px 5px;line-height:1.4;';
+  d.textContent=c;
+  g.appendChild(d);
+});
+
+let sel=null;
+tiers.forEach(t=>{
+  const lbl=document.createElement('div');
+  lbl.style.cssText='font-size:9.5px;font-weight:500;color:var(--color-text-secondary);display:flex;flex-direction:column;justify-content:center;padding-right:3px;line-height:1.5;';
+  lbl.innerHTML=`<span style="color:var(--color-text-primary);font-weight:500;">${t.l}</span><span style="opacity:.65;font-size:9px;">${t.s}</span>`;
+  g.appendChild(lbl);
+  cats.forEach(cat=>{
+    const cd=D[cat][t.id];
+    const cell=document.createElement('div');
+    cell.className='mc '+zc[cd.z];
+    cell.textContent=cd.n;
+    cell.style.whiteSpace='pre-line';
+    cell.onclick=()=>{
+      if(sel)sel.classList.remove('sel');
+      cell.classList.add('sel');
+      sel=cell;
+      showDetail(cat,t,cd);
+    };
+    g.appendChild(cell);
+  });
+});
+
+function showDetail(cat,t,cd){
+  document.getElementById('dp').innerHTML=`
+<div style="margin-bottom:10px;display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
+  <span style="font-size:14px;font-weight:500;color:var(--color-text-primary);">${cat} · ${t.l}</span>
+  <span class="bd ${zb[cd.z]}">${zl[cd.z]}</span>
+</div>
+<div style="display:grid;gap:7px;font-size:12px;">
+  <div style="display:flex;gap:8px;"><span style="color:var(--color-text-secondary);min-width:60px;flex-shrink:0;">产品形态</span><span style="color:var(--color-text-primary);">${cd.p}</span></div>
+  <div style="display:flex;gap:8px;"><span style="color:var(--color-text-secondary);min-width:60px;flex-shrink:0;">目标买家</span><span style="color:var(--color-text-primary);">${cd.b}</span></div>
+  <div style="display:flex;gap:8px;"><span style="color:var(--color-text-secondary);min-width:60px;flex-shrink:0;">分析备注</span><span style="color:var(--color-text-primary);">${cd.note}</span></div>
+</div>`;
+}
+</script>
