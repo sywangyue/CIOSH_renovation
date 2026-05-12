@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>CIOSH 展会助手</title>
+<style>
+:root {
+  --green: #009040;
+  --orange: #f39700;
+  --dark: #221b19;
+  --white: #ffffff;
+  --gray-bg: #f5f5f5;
+  --font-stack: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", 黑体, 微软雅黑, 思源黑体, Arial, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: var(--font-stack);
+  background: #e8e8e8;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.phone-frame {
+  width: 393px;
+  max-width: 100vw;
+  height: 852px;
+  max-height: 100vh;
+  background: var(--gray-bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 20px;
+  box-shadow: 0 0 40px rgba(0,0,0,.15);
+  position: relative;
+}
+
+/* Top Bar — matches ciosh.com: white logo-row above green nav-row */
+.topbar {
+  background: var(--white);
+  flex-shrink: 0;
+}
+.topbar-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+}
+.topbar-logo {
+  height: 36px;
+  width: auto;
+}
+.topbar-info {
+  font-size: 12px;
+  color: var(--dark);
+  line-height: 1.4;
+}
+.topbar-info .title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--dark);
+}
+/* Green accent strip below logo area */
+.topbar-accent {
+  height: 4px;
+  background: var(--green);
+}
+/* Green nav strip with quick info */
+.topbar-nav {
+  background: var(--green);
+  color: var(--white);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* Messages area */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Welcome card */
+.welcome-msg {
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+.welcome-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.welcome-mascot {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.welcome-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--dark);
+}
+.welcome-text {
+  font-size: 15px;
+  color: #555;
+  line-height: 1.6;
+}
+.welcome-text ul {
+  list-style: none;
+  margin-top: 6px;
+}
+.welcome-text ul li::before {
+  content: "· ";
+  color: var(--green);
+  font-weight: bold;
+}
+
+/* AI message bubble — white bg, green left border */
+.msg-ai {
+  background: var(--white);
+  border-left: 3px solid var(--green);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  font-size: 15px;
+  color: var(--dark);
+  line-height: 1.6;
+  align-self: flex-start;
+  max-width: 88%;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06);
+}
+
+/* User message bubble — green bg, white text */
+.msg-user {
+  background: var(--green);
+  color: var(--white);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 15px;
+  line-height: 1.5;
+  align-self: flex-end;
+  max-width: 80%;
+}
+
+/* Exhibitor card — white bg, orange top line, 8px radius */
+.exhibitor-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+.exhibitor-card {
+  background: var(--white);
+  border-top: 1px solid var(--orange);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+.exhibitor-card .name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--dark);
+  margin-bottom: 4px;
+}
+.exhibitor-card .meta {
+  font-size: 13px;
+  color: #666;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.exhibitor-card .booth {
+  color: var(--green);
+  font-weight: 500;
+}
+
+/* Loading dots */
+.loading-dots {
+  display: flex;
+  gap: 4px;
+  padding: 8px 0;
+}
+.loading-dots span {
+  width: 8px;
+  height: 8px;
+  background: #bbb;
+  border-radius: 50%;
+  animation: dot-bounce 1.4s infinite ease-in-out both;
+}
+.loading-dots span:nth-child(1) { animation-delay: -.32s; }
+.loading-dots span:nth-child(2) { animation-delay: -.16s; }
+@keyframes dot-bounce {
+  0%,80%,100% { transform:scale(0); }
+  40% { transform:scale(1); }
+}
+
+/* Typing cursor */
+.typing-cursor::after {
+  content: "▊";
+  animation: blink 1s infinite;
+  color: var(--green);
+}
+@keyframes blink {
+  0%,50% { opacity:1; }
+  51%,100% { opacity:0; }
+}
+
+/* Quick entry — from site navigation */
+.quick-entries {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 12px 16px;
+  flex-shrink: 0;
+  border-top: 1px solid #e0e0e0;
+  background: var(--white);
+}
+.quick-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border: 1px solid var(--green);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all .15s;
+  font-family: var(--font-stack);
+}
+.quick-btn:hover,
+.quick-btn:active {
+  background: var(--green);
+  color: var(--white);
+}
+.quick-btn-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--orange);
+  flex-shrink: 0;
+}
+
+/* Input area */
+.input-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--white);
+  border-top: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+.input-box {
+  flex: 1;
+  border: 1px solid #ddd;
+  border-radius: var(--radius-lg);
+  padding: 10px 16px;
+  font-size: 15px;
+  font-family: var(--font-stack);
+  outline: none;
+  transition: border-color .15s;
+  background: var(--gray-bg);
+}
+.input-box:focus {
+  border-color: var(--green);
+}
+.send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: var(--green);
+  color: var(--white);
+  font-size: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity .15s;
+}
+.send-btn:active { opacity: .8; }
+.send-btn:disabled { opacity: .4; cursor: default; }
+
+/* Stats row */
+.stats-row {
+  display: flex;
+  gap: 16px;
+  padding: 4px 0;
+}
+.stat-item {
+  text-align: center;
+}
+.stat-num {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--green);
+}
+.stat-label {
+  font-size: 11px;
+  color: #999;
+}
+
+/* Scrollbar */
+.messages::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+
+  <!-- Top Bar — matches ciosh.com: logo-row (white) + accent + nav (green) -->
+  <div class="topbar">
+    <div class="topbar-logo-row">
+      <img class="topbar-logo" src="https://www.ciosh.com/static/home/cn/images/logo2022.png" alt="CIOSH" crossorigin="anonymous">
+      <div class="topbar-info">
+        <div class="title">第111届中国国际劳动保护用品交易会</div>
+        <div>2026.10.26-28 · 山东国际会展中心（济南）</div>
+      </div>
+    </div>
+    <div class="topbar-accent"></div>
+    <div class="topbar-nav">
+      展会助手 · 1,260家展商 · 293家手部防护 · 80,000㎡
+    </div>
+  </div>
+
+  <!-- Messages -->
+  <div class="messages" id="messages">
+
+    <!-- Welcome -->
+    <div class="welcome-msg">
+      <div class="welcome-header">
+        <img class="welcome-mascot" src="https://www.ciosh.com/static/home/cn/images/cartoon.png" alt="" crossorigin="anonymous">
+        <span class="welcome-name">CIOSH 展会助手</span>
+      </div>
+      <div class="welcome-text">
+        您好！我是 CIOSH 劳保会 AI 助手。我可以帮您：
+        <ul>
+          <li>查找展商和产品</li>
+          <li>了解展会日程和交通</li>
+          <li>推荐劳保用品供应商</li>
+          <li>解答行业标准与认证</li>
+        </ul>
+      </div>
+      <div class="stats-row" style="margin-top:12px">
+        <div class="stat-item">
+          <div class="stat-num">1,260</div>
+          <div class="stat-label">参展企业</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">80,000</div>
+          <div class="stat-label">㎡ 展示面积</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">40,000+</div>
+          <div class="stat-label">专业观众</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Demo user query -->
+    <div class="msg-user">帮我找手套生产商</div>
+
+    <!-- AI reply with exhibitor cards -->
+    <div class="msg-ai" id="demo-reply">
+      <div>为您找到以下手部及手臂防护展商：</div>
+      <div class="exhibitor-cards">
+        <div class="exhibitor-card">
+          <div class="name">津凯兴（天津）手套有限公司</div>
+          <div class="meta"><span>手部及手臂防护</span><span class="booth">展位 E1 1E16</span></div>
+        </div>
+        <div class="exhibitor-card">
+          <div class="name">高密市飞驰防护用品有限公司</div>
+          <div class="meta"><span>手部及手臂防护 · 劳保手套</span><span class="booth">展位 E1 1E11</span></div>
+        </div>
+        <div class="exhibitor-card">
+          <div class="name">邯郸市恒安易民手套制造有限公司</div>
+          <div class="meta"><span>手部及手臂防护</span><span class="booth">展位 E1 1E60</span></div>
+        </div>
+        <div class="exhibitor-card">
+          <div class="name">磁县志家劳保手套厂</div>
+          <div class="meta"><span>手部及手臂防护</span><span class="booth">展位 E2 2E22</span></div>
+        </div>
+        <div class="exhibitor-card">
+          <div class="name">衡阳耐适防护科技有限公司</div>
+          <div class="meta"><span>手部及手臂防护 · 焊接防护服装手套</span><span class="booth">展位 E1 1A17</span></div>
+        </div>
+        <div class="exhibitor-card">
+          <div class="name">临沂润方圆安全防护用品有限公司</div>
+          <div class="meta"><span>手部及手臂防护 · 劳保手套，防护服，护目镜，安全帽</span><span class="booth">展位 E2 2D71</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Quick Entries -->
+  <div class="quick-entries">
+    <button class="quick-btn" onclick="quickSend('展商名录 手部防护')">
+      <svg class="quick-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      展商名录
+    </button>
+    <button class="quick-btn" onclick="quickSend('展品范围有哪些')">
+      <svg class="quick-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      展品范围
+    </button>
+    <button class="quick-btn" onclick="quickSend('展会时间地点')">
+      <svg class="quick-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      展会日程
+    </button>
+    <button class="quick-btn" onclick="quickSend('展会交通怎么走')">
+      <svg class="quick-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="10" r="3"/><path d="M12 2v3m0 10v7M5.6 5.6l2.1 2.1m8.6 8.6l2.1 2.1M2 12h3m14 0h3M5.6 18.4l2.1-2.1m8.6-8.6l2.1-2.1"/></svg>
+      交通
+    </button>
+  </div>
+
+  <!-- Input -->
+  <div class="input-area">
+    <input type="text" class="input-box" id="userInput" placeholder="输入您的问题..." onkeydown="if(event.key==='Enter')sendMessage()">
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()">↑</button>
+  </div>
+
+</div>
+
+<script src="./env.js"></script>
+<script>
+// ============================================================
+// Hard-coded 展商数据库（来自 CIOSH2026展商名单.xlsx）
+// ============================================================
+const EXHIBITORS = [
+  { name:"津凯兴（天津）手套有限公司", cat:"手部及手臂防护", prod:"", booth:"E1 1E16" },
+  { name:"高密市飞驰防护用品有限公司", cat:"手部及手臂防护", prod:"劳保手套", booth:"E1 1E11" },
+  { name:"邯郸市恒安易民手套制造有限公司", cat:"手部及手臂防护", prod:"", booth:"E1 1E60" },
+  { name:"磁县志家劳保手套厂", cat:"手部及手臂防护", prod:"", booth:"E2 2E22" },
+  { name:"衡阳耐适防护科技有限公司", cat:"手部及手臂防护", prod:"焊接防护服装手套", booth:"E1 1A17" },
+  { name:"临沂润方圆安全防护用品有限公司", cat:"手部及手臂防护", prod:"劳保手套，防护服，护目镜，安全帽", booth:"E2 2D71" },
+  { name:"南慷京灯科技有限责任公司", cat:"户外用品及装备", prod:"手电筒", booth:"E1 1E46" },
+  { name:"台州市路桥晨丰防护用品有限公司", cat:"眼面部防护", prod:"防护眼镜", booth:"E1 1F55" },
+  { name:"石家庄萱奇床上用品有限公司", cat:"其他", prod:"", booth:"E1 1E55" },
+  { name:"永康市方天防护用品有限公司", cat:"眼面部防护", prod:"防护眼镜", booth:"E1 1C51" },
+  { name:"温州宝迪安全用品有限公司", cat:"其他", prod:"安全锁具", booth:"E1 1G09" },
+  { name:"山东临沂市金添顺劳保用品有限公司", cat:"防护服及职业服装", prod:"喷砂服，车工护袖，焊工护袖，围裙", booth:"E1 1E53" },
+  { name:"太仓市启华针织品有限公司", cat:"手部及手臂防护", prod:"", booth:"E1 1T01" },
+  { name:"杭州爱贝护医疗科技有限公司", cat:"手部及手臂防护", prod:"", booth:"E1 1A49" },
+];
+
+// ============================================================
+// 展会信息（来自 ciosh.com/autumn.html）
+// ============================================================
+const EXPO_INFO = `
+第111届中国国际劳动保护用品交易会（CIOSH）
+时间：2026年10月26-28日
+地点：山东国际会展中心（济南）
+主办：中国纺织品商业协会
+承办：中纺流通（北京）会展有限公司
+协办：杜塞尔多夫展览（上海）有限公司
+规模：单届参展企业超1,500家 / 展示面积超80,000㎡ / 专业观众超40,000人
+电话：010-68535315
+邮箱：ciosh@ciosh.com
+`;
+
+const EXPO_CATEGORIES = `
+工作防护：个体防护装备、形象展示类服装、高空防护装备、防护材料、配件及组件、检测认证
+生产安全：消防安全产品、防爆/防毒/防辐射产品、危险有害物质管理、测控技术、外骨骼机器人
+职业健康：职业健康管理及预防、工作位构造及人体工学、工作环境监测仪器、卫生及卫生用品
+应急救援技术与装备：技术救援、公共危机管理
+`;
+
+// ============================================================
+// DeepSeek API — key from env.js
+// ============================================================
+const DS_API_KEY = (window.__CIOSH_CONFIG__ || {}).DEEPSEEK_API_KEY || '';
+const DS_API_URL = 'https://api.deepseek.com/chat/completions';
+const SYSTEM_PROMPT = `你是 CIOSH（中国国际劳动保护用品交易会）的 AI 展会助手。
+
+## 展会基本信息
+${EXPO_INFO}
+
+## 展品分类
+${EXPO_CATEGORIES}
+
+## 展商数据（演示用，共${EXHIBITORS.length}家）
+${EXHIBITORS.map((e,i) => `${i+1}. ${e.name} - ${e.cat}${e.prod?' · '+e.prod:''} - 展位 ${e.booth}`).join('\n')}
+
+## 回复规则
+- 用户查询展商时，从上方展商数据中匹配，用简洁列表回复（名称、类别、主营产品、展位）
+- 涉及展会基本信息时，直接使用上方信息回答
+- 不知道的就说不知道，不要编造
+- 语气友好、简洁、专业
+- 如果匹配到多个展商，列出前6家`;
+
+// ============================================================
+// DOM
+// ============================================================
+const messagesEl = document.getElementById('messages');
+const inputEl = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+let isStreaming = false;
+
+function scrollBottom() {
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+// Add a message to the chat
+function addMessage(role, content) {
+  const div = document.createElement('div');
+  div.className = role === 'user' ? 'msg-user' : 'msg-ai';
+  div.textContent = content;
+  messagesEl.appendChild(div);
+  scrollBottom();
+  return div;
+}
+
+// Add loading indicator
+function addLoading() {
+  const div = document.createElement('div');
+  div.className = 'msg-ai';
+  div.style.borderLeft = '3px solid var(--green)';
+  div.style.background = 'var(--white)';
+  div.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+  messagesEl.appendChild(div);
+  scrollBottom();
+  return div;
+}
+
+// Quick send
+function quickSend(text) {
+  if (isStreaming) return;
+  inputEl.value = text;
+  sendMessage();
+}
+
+// Send message
+async function sendMessage() {
+  const query = inputEl.value.trim();
+  if (!query || isStreaming) return;
+
+  isStreaming = true;
+  sendBtn.disabled = true;
+  inputEl.value = '';
+
+  addMessage('user', query);
+  const loadingEl = addLoading();
+
+  try {
+    const response = await fetch(DS_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${DS_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: query },
+        ],
+        stream: true,
+        max_tokens: 1024,
+      }),
+    });
+
+    if (!response.ok) throw new Error(`API ${response.status}`);
+
+    // Remove loading, create AI bubble
+    loadingEl.remove();
+    const aiDiv = document.createElement('div');
+    aiDiv.className = 'msg-ai';
+    aiDiv.style.borderLeft = '3px solid var(--green)';
+    aiDiv.style.background = 'var(--white)';
+    aiDiv.style.borderRadius = 'var(--radius-md)';
+    aiDiv.style.padding = '14px 16px';
+    aiDiv.style.color = 'var(--dark)';
+    aiDiv.style.lineHeight = '1.6';
+    messagesEl.appendChild(aiDiv);
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') return;
+          try {
+            const json = JSON.parse(data);
+            const content = json.choices?.[0]?.delta?.content;
+            if (content) {
+              aiDiv.textContent += content;
+              scrollBottom();
+            }
+          } catch(e) {}
+        }
+      }
+    }
+  } catch (err) {
+    loadingEl.remove();
+    addMessage('ai', '抱歉，暂时无法连接。请稍后再试。\n\n（Demo 模式：API key 未配置或网络不可达）');
+  } finally {
+    isStreaming = false;
+    sendBtn.disabled = false;
+    scrollBottom();
+  }
+}
+
+// Init
+scrollBottom();
+</script>
+</body>
+</html>

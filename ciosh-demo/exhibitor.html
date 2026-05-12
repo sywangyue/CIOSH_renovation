@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>展商详情 · CIOSH</title>
+<style>
+:root {
+  --green: #009040;
+  --orange: #f39700;
+  --dark: #221b19;
+  --white: #ffffff;
+  --gray-bg: #f5f5f5;
+  --gray-light: #e8e8e8;
+  --font-stack: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", 黑体, 微软雅黑, 思源黑体, Arial, sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: var(--font-stack);
+  background: var(--gray-light);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.phone-frame {
+  width: 393px;
+  max-width: 100vw;
+  height: 852px;
+  max-height: 100vh;
+  background: var(--gray-bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 20px;
+  box-shadow: 0 0 40px rgba(0,0,0,.15);
+  position: relative;
+}
+
+/* Top Bar */
+.topbar {
+  background: var(--white);
+  flex-shrink: 0;
+}
+.topbar-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+}
+.topbar-logo {
+  height: 36px;
+  width: auto;
+}
+.topbar-info {
+  font-size: 12px;
+  color: var(--dark);
+  line-height: 1.4;
+}
+.topbar-info .title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--dark);
+}
+.topbar-accent {
+  height: 4px;
+  background: var(--green);
+}
+.topbar-nav {
+  background: var(--green);
+  color: var(--white);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* Scrollable content area */
+.content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.content-scroll::-webkit-scrollbar { width: 0; }
+
+/* Back button row */
+.back-row {
+  padding: 10px 16px;
+  background: var(--white);
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--green);
+  cursor: pointer;
+}
+.back-row svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Hero / Company Header */
+.company-hero {
+  background: linear-gradient(135deg, var(--green) 0%, #007a35 100%);
+  padding: 24px 20px 20px;
+  color: var(--white);
+}
+.company-logo-placeholder {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.company-name {
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+.company-badge-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.company-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 99px;
+  background: rgba(255,255,255,.18);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+/* Content sections */
+.section {
+  margin: 10px 16px;
+  background: var(--white);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--dark);
+  margin-bottom: 12px;
+  padding-left: 8px;
+  border-left: 3px solid var(--green);
+  line-height: 1.3;
+}
+
+/* Info rows */
+.info-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.info-label {
+  color: #999;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+.info-value {
+  color: var(--dark);
+  text-align: right;
+  font-weight: 400;
+}
+.info-value.green {
+  color: var(--green);
+  font-weight: 600;
+}
+
+/* Product tags */
+.product-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.product-tag {
+  padding: 6px 14px;
+  border: 1px solid var(--orange);
+  border-radius: 99px;
+  color: var(--orange);
+  font-size: 13px;
+  font-weight: 400;
+  background: var(--white);
+}
+
+/* Company intro */
+.company-intro {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #555;
+}
+
+/* Contact card */
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  font-size: 14px;
+  color: var(--dark);
+  border-bottom: 1px solid #f0f0f0;
+}
+.contact-item:last-child {
+  border-bottom: none;
+}
+.contact-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--gray-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--green);
+}
+
+/* CTA button */
+.cta-btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: var(--green);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 500;
+  font-family: var(--font-stack);
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: opacity .15s;
+}
+.cta-btn:active { opacity: .8; }
+
+.cta-outline {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: var(--white);
+  color: var(--green);
+  border: 1px solid var(--green);
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 500;
+  font-family: var(--font-stack);
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: all .15s;
+  margin-top: 10px;
+}
+.cta-outline:active {
+  background: var(--green);
+  color: var(--white);
+}
+
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="topbar-logo-row">
+      <img class="topbar-logo" src="https://www.ciosh.com/static/home/cn/images/logo2022.png" alt="CIOSH" crossorigin="anonymous">
+      <div class="topbar-info">
+        <div class="title">第111届中国国际劳动保护用品交易会</div>
+        <div>2026.10.26-28 · 山东国际会展中心（济南）</div>
+      </div>
+    </div>
+    <div class="topbar-accent"></div>
+    <div class="topbar-nav">
+      展商详情
+    </div>
+  </div>
+
+  <div class="content-scroll">
+
+  <!-- Back -->
+  <div class="back-row" onclick="history.back()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
+    返回
+  </div>
+
+  <!-- Company Hero -->
+  <div class="company-hero">
+    <div class="company-logo-placeholder">飞</div>
+    <div class="company-name">高密市飞驰防护用品有限公司</div>
+    <div class="company-badge-row">
+      <span class="company-badge">手部及手臂防护</span>
+      <span class="company-badge">展位 E1 1E11</span>
+    </div>
+  </div>
+
+  <!-- Basic Info -->
+  <div class="section">
+    <div class="section-title">基本信息</div>
+    <div class="info-grid">
+      <div class="info-row">
+        <span class="info-label">公司名称</span>
+        <span class="info-value">高密市飞驰防护用品有限公司</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">展品分类</span>
+        <span class="info-value">手部及手臂防护</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">展位号</span>
+        <span class="info-value green">E1 1E11</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">所在展馆</span>
+        <span class="info-value">E1 馆</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">所在地区</span>
+        <span class="info-value">山东 · 高密</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Products -->
+  <div class="section">
+    <div class="section-title">主营产品</div>
+    <div class="product-tags">
+      <span class="product-tag">劳保手套</span>
+      <span class="product-tag">棉纱手套</span>
+      <span class="product-tag">丁腈手套</span>
+      <span class="product-tag">防切割手套</span>
+      <span class="product-tag">点胶手套</span>
+      <span class="product-tag">耐油手套</span>
+    </div>
+  </div>
+
+  <!-- Company Description -->
+  <div class="section">
+    <div class="section-title">企业简介</div>
+    <p class="company-intro">
+      高密市飞驰防护用品有限公司位于山东省高密市，是一家专业从事劳保手套研发、生产和销售的综合性企业。公司拥有先进的生产设备和严格的质量管理体系，产品涵盖棉纱手套、丁腈手套、防切割手套、点胶手套等多个系列，广泛应用于建筑、机械加工、物流仓储等行业。
+    </p>
+    <p class="company-intro" style="margin-top:8px;">
+      公司始终坚持以质量求生存、以创新求发展，产品畅销全国各省市，深受广大用户信赖。
+    </p>
+  </div>
+
+  <!-- Contact -->
+  <div class="section">
+    <div class="section-title">联系方式</div>
+    <div class="contact-item">
+      <div class="contact-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </div>
+      <span>山东省高密市</span>
+    </div>
+    <div class="contact-item">
+      <div class="contact-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 6 10-6"/></svg>
+      </div>
+      <span>ciosh@ciosh.com</span>
+    </div>
+    <div class="contact-item">
+      <div class="contact-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+      </div>
+      <span>010-68535315</span>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="section">
+    <a class="cta-btn" href="javascript:;">预约洽谈</a>
+    <a class="cta-outline" href="javascript:;">收藏展商</a>
+  </div>
+
+  </div><!-- .content-scroll -->
+
+</div>
+
+</body>
+</html>
