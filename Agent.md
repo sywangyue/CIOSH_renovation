@@ -90,6 +90,22 @@
 - **没有结构化数据底座**
 - **没有跨文件的统一索引**
 
+### 项目文件组织
+
+```
+docs/         S-document 战略分析文档（YYYY-MM-DD_S[N]_[topic].md）
+Branding/     品牌视觉文件（英文命名，CIOSH_ 前缀）
+data/         结构化数据文件（db / xlsx / csv）
+as_is_manual_file/  现场原始文件（PDF 合同 / 申请表等）
+archive/      历史归档（一次性脚本 / 过期截图）
+output/       分析产出（PPTX 等）
+intel/        情报雷达子项目（独立 Python 系统）
+```
+
+### 命名规范
+
+见 `document_rules.md`。核心规则：S-document 用 `YYYY-MM-DD_S[N]_[topic_en].md`，Branding 文件只用英文 `CIOSH_[descriptor].[ext]`。
+
 ---
 
 ## 6. 转型目标(Transformation Targets · 2027)
