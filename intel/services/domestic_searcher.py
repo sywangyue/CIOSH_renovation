@@ -26,6 +26,46 @@ _UA = (
 _BAIDU_TBS = {1: "qdr:d", 7: "qdr:w", 30: "qdr:m", 90: "qdr:y"}
 
 
+def _parse_baidu_date(text: str) -> str:
+    """
+    将百度搜索结果中的时间文本转为 ISO 日期字符串（YYYY-MM-DD）。
+    支持："3天前" / "2小时前" / "昨天" / "2024年4月15日" / "2024-04-15" / "04-15"。
+    无法识别时返回空字符串。
+    """
+    text = text.strip()
+    if not text:
+        return ""
+    now = datetime.now()
+    # 相对时间：N分钟前 / N小时前
+    m = re.search(r"(\d+)\s*分钟前", text)
+    if m:
+        return (now - timedelta(minutes=int(m.group(1)))).strftime("%Y-%m-%d")
+    m = re.search(r"(\d+)\s*小时前", text)
+    if m:
+        return (now - timedelta(hours=int(m.group(1)))).strftime("%Y-%m-%d")
+    # 相对时间：N天前
+    m = re.search(r"(\d+)\s*天前", text)
+    if m:
+        return (now - timedelta(days=int(m.group(1)))).strftime("%Y-%m-%d")
+    if "昨天" in text:
+        return (now - timedelta(days=1)).strftime("%Y-%m-%d")
+    # 绝对日期：YYYY年M月D日 或 YYYY年M月
+    m = re.search(r"(20\d{2})年(\d{1,2})月(\d{1,2})日", text)
+    if m:
+        return f"{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+    m = re.search(r"(20\d{2})年(\d{1,2})月", text)
+    if m:
+        return f"{m.group(1)}-{int(m.group(2)):02d}-01"
+    # 绝对日期：YYYY-MM-DD 或 MM-DD（当年）
+    m = re.search(r"(20\d{2})-(\d{2})-(\d{2})", text)
+    if m:
+        return f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
+    m = re.search(r"^(\d{2})-(\d{2})$", text)
+    if m:
+        return f"{now.year}-{m.group(1)}-{m.group(2)}"
+    return ""
+
+
 # ─── 百度新闻 ──────────────────────────────────────────────────────────────────
 
 def search_baidu(word: str, date_range_days: int = 1, max_results: int = 5) -> list[dict]:
@@ -68,12 +108,18 @@ def search_baidu(word: str, date_range_days: int = 1, max_results: int = 5) -> l
             snippet_tag = parent.find(class_=re.compile(r"c-line-clamp|abstract|c-span"))
             snippet = snippet_tag.get_text(strip=True) if snippet_tag else ""
 
+            # 发布日期：从结果区块提取时间戳（百度新闻常见 c-color-gray2 / c-gap-top-small）
+            pub_date = ""
+            date_span = parent.find("span", class_=re.compile(r"c-color-gray|c-gap-top|time|date"))
+            if date_span:
+                pub_date = _parse_baidu_date(date_span.get_text(strip=True))
+
             results.append({
                 "title": title,
                 "url": href,
                 "snippet": snippet[:300],
                 "source_name": source_name[:50],
-                "pub_date": "",
+                "pub_date": pub_date,
                 "source_keyword": word,
                 "source_channel": "baidu",
             })
