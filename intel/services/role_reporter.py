@@ -21,6 +21,8 @@ WHITE   = "#ffffff"
 GRAY_BG = "#f5f5f5"
 BORDER  = "#e0e0e0"
 MUTED   = "#999999"
+LIGHT_GREEN  = "#e8f5e9"
+LIGHT_ORANGE = "#fff3e0"
 FONT    = ("'Helvetica Neue',Helvetica,'PingFang SC',"
            "'Hiragino Sans GB','Microsoft YaHei',Arial,sans-serif")
 
@@ -107,7 +109,7 @@ def _bullet_block(text: str) -> str:
     lines = [ln.strip() for ln in text.split("\n") if ln.strip()]
     rows = "".join(
         f'<div style="font-size:12px;color:{DARK};line-height:1.6;'
-        f'margin-bottom:4px;font-family:{FONT};">{_html.escape(ln)}</div>'
+        f'margin-bottom:2px;font-family:{FONT};">{_html.escape(ln)}</div>'
         for ln in lines
     )
     return rows
@@ -115,7 +117,7 @@ def _bullet_block(text: str) -> str:
 
 def _role_card(title: str, digest: str, accent: str) -> str:
     return (
-        f'<div style="margin-bottom:12px;border-left:3px solid {accent};padding-left:10px;">'
+        f'<div style="margin-bottom:8px;border-left:3px solid {accent};padding-left:10px;">'
         f'<div style="font-size:11px;font-weight:bold;color:{DARK};'
         f'margin-bottom:8px;font-family:{FONT};">{title}</div>'
         f'{_bullet_block(digest)}'
@@ -141,35 +143,63 @@ def _category_tag(category: str) -> str:
     )
 
 
-def _item_row_b(item: dict[str, Any], is_last: bool) -> str:
-    priority = (item.get("priority") or "low").lower()
+def _item_row_b(item: dict[str, Any], seq_num: int, is_last: bool) -> str:
     category = item.get("category") or "other"
     summary = _html.escape(item.get("summary_zh") or "")
     url = _safe_url(item.get("url") or "")
     border = "" if is_last else f"border-bottom:1px dashed {BORDER};"
+    seq_span = f'<span style="font-size:11px;color:{MUTED};font-family:{FONT};">▸&nbsp;{seq_num:02d}&nbsp;</span>'
     summary_link = (
         f'<a href="{url}" style="color:{DARK};text-decoration:underline;'
         f'font-family:{FONT};">{summary}</a>'
     )
     return (
-        f'<div style="padding:12px 0;{border}">'
-        f'<div style="margin-bottom:6px;">{_priority_badge(priority)}&nbsp;&nbsp;{_category_tag(category)}</div>'
+        f'<div style="padding:6px 0;{border}">'
+        f'<div style="margin-bottom:4px;">{seq_span}{_category_tag(category)}</div>'
         f'<div style="font-size:14px;color:{DARK};line-height:1.6;font-family:{FONT};">{summary_link}</div>'
         f'</div>'
     )
 
 
-def _item_row_c(item: dict[str, Any]) -> str:
+def _item_row_c(item: dict[str, Any], seq_num: int) -> str:
     url = _safe_url(item.get("url") or "")
     title = _html.escape(item.get("title") or "")
     category = item.get("category") or "other"
     cat_label = _CATEGORY_NAMES.get(category, category)
+    seq_span = f'<span style="font-size:11px;color:{MUTED};font-family:{FONT};">▸&nbsp;{seq_num:02d}&nbsp;</span>'
     return (
         f'<div style="padding:4px 0;font-size:10px;font-family:{FONT};">'
-        f'• <a href="{url}" style="color:{GREEN};text-decoration:none;">{title}</a>'
+        f'{seq_span}<a href="{url}" style="color:{GREEN};text-decoration:none;">{title}</a>'
         f'&nbsp;<span style="color:{MUTED};font-size:10px;">[{cat_label}]</span>'
         f'</div>'
     )
+
+
+def _priority_block(
+    items: list[dict[str, Any]],
+    border_color: str,
+    bg_color: str,
+    seq_start: int,
+) -> tuple[str, int]:
+    """
+    Wraps items in a left-border colored block for Part B.
+    Returns (html_str, next_seq_num).
+    If items is empty, returns ("", seq_start) — no wrapper div rendered.
+    """
+    if not items:
+        return ("", seq_start)
+    rows = []
+    for i, item in enumerate(items):
+        seq_num = seq_start + i
+        is_last = (i == len(items) - 1)
+        rows.append(_item_row_b(item, seq_num, is_last))
+    block = (
+        f'<div style="border-left:4px solid {border_color};'
+        f'background:{bg_color};padding:4px 12px;margin-bottom:12px;">'
+        + "".join(rows)
+        + f'</div>'
+    )
+    return (block, seq_start + len(items))
 
 
 def _divider() -> str:
@@ -291,39 +321,41 @@ def build_unified_html(
         + f'</div>'
     )
 
-    # ── Part B：高优先级 / 中优先级两个独立区块 ──────────────────────────────
-    def _b_block(b_items: list, label: str) -> str:
-        if b_items:
-            rows = "".join(
-                _item_row_b(item, i == len(b_items) - 1)
-                for i, item in enumerate(b_items)
-            )
-        else:
-            rows = f'<div style="color:{MUTED};font-size:13px;padding:8px 0;">暂无</div>'
-        return (
-            f'<div style="margin-bottom:16px;">'
-            + _section_label(label)
-            + rows
-            + f'</div>'
-        )
+    # ── Part B：优先级分组色块 ─────────────────────────────────────────────────
+    high_sorted = sorted(high_items, key=lambda x: x.get("source_keyword") or "")
+    med_sorted  = sorted(med_items,  key=lambda x: x.get("source_keyword") or "")
+
+    b_green_html,  seq_after_high = _priority_block(high_sorted, GREEN,  LIGHT_GREEN,  1)
+    b_orange_html, seq_after_med  = _priority_block(med_sorted,  ORANGE, LIGHT_ORANGE, seq_after_high)
+    b_gray_html,   seq_after_b    = _priority_block(low_items,   MUTED,  GRAY_BG,      seq_after_med)
 
     part_b = (
         f'<div style="padding:0 20px;">'
         + _divider()
         + _section_label("B &nbsp; 重点情报")
-        + _b_block(high_items, f"高优先级情报（{len(high_items)}条）")
-        + _b_block(med_items,  f"中优先级情报（{len(med_items)}条）")
+        + b_green_html
+        + b_orange_html
+        + b_gray_html
         + f'</div>'
     )
 
     # ── Part C：其他情报 ──────────────────────────────────────────────────────
-    if low_items:
-        c_rows = "".join(_item_row_c(item) for item in low_items)
+    # NOTE: low_items are now also shown in Part B gray block.
+    # Part C shows "unknown" priority items not captured by high/med/low filters.
+    unknown_items = [
+        i for i in items
+        if (i.get("priority") or "").lower() not in ("high", "medium", "low")
+    ]
+    if unknown_items:
+        c_rows = "".join(
+            _item_row_c(item, seq_after_b + idx)
+            for idx, item in enumerate(unknown_items)
+        )
         part_c_body = c_rows
     else:
         part_c_body = (
             f'<div style="color:{MUTED};font-size:13px;padding:8px 0;">'
-            f'今日无低优先级情报</div>'
+            f'今日无其他情报</div>'
         )
 
     part_c = (
