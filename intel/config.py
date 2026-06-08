@@ -37,9 +37,16 @@ class Config:
 
     # ── 采集参数 ──────────────────────────────────────────────
     MAX_RESULTS_PER_KEYWORD: int = int(os.getenv("MAX_RESULTS_PER_KEYWORD", "5"))
-    MAX_LAYER3_PER_DAY: int = int(os.getenv("MAX_LAYER3_PER_DAY", "20"))
     LAYER2_MIN_SCORE: int = int(os.getenv("LAYER2_MIN_SCORE", "1"))
     DEDUP_THRESHOLD: int = int(os.getenv("DEDUP_THRESHOLD", "85"))
+
+    # ── Layer3 分桶限额（Bucket Cap）────────────────────────────
+    # Tavily 桶：国际内容，默认 15 条
+    # 国内桶：百度/知乎/B站合并竞争，默认 25 条
+    # 每日 Layer3 总量上限 = CAP_TAVILY + CAP_DOMESTIC ≤ 40 条
+    LAYER3_CAP_TAVILY:   int = int(os.getenv("LAYER3_CAP_TAVILY", "15"))
+    LAYER3_CAP_DOMESTIC: int = int(os.getenv("LAYER3_CAP_DOMESTIC", "25"))
+    SEED_LAYER3_CAP:     int = int(os.getenv("SEED_LAYER3_CAP", "50"))
 
     def validate(self) -> list[str]:
         """返回缺失的必填配置项列表，空列表表示配置完整。"""
@@ -57,5 +64,11 @@ class Config:
         return missing
 
 
+_config: "Config | None" = None
+
+
 def get_config() -> Config:
-    return Config()
+    global _config
+    if _config is None:
+        _config = Config()
+    return _config

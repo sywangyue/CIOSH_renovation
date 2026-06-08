@@ -47,15 +47,10 @@ def send_report(subject: str, html_body: str) -> bool:
     msg.set_content(f"请使用支持 HTML 的邮件客户端查看本邮件。\n\n{subject}")
     msg.add_alternative(html_body, subtype="html")
 
-    # sendmail 收件人列表 = To + Cc（BCC 可加入此列表但不写入邮件头）
-    recipients = [a.strip() for a in cfg.MAIL_TO.split(",") if a.strip()]
-    if cc:
-        recipients += [a.strip() for a in cc.split(",") if a.strip()]
-
     try:
         with smtplib.SMTP_SSL(cfg.SMTP_HOST, cfg.SMTP_PORT) as server:
             server.login(cfg.SMTP_USER, cfg.SMTP_PASSWORD)
-            server.sendmail(cfg.SMTP_USER, recipients, msg.as_string())
+            server.send_message(msg)
         print(f"邮件发送成功：{subject}（To: {cfg.MAIL_TO}" + (f"  Cc: {cc}" if cc else "") + "）")
         return True
     except Exception as e:

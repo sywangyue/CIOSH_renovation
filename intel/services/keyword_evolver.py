@@ -135,14 +135,16 @@ def apply_evolution(
 
     # 记录进化日志
     if retired or added:
+        reasons = []
+        if retired:
+            reasons.append(f"yield_rate < {_MIN_YIELD_RATE} 连续 {_RETIRE_AFTER_WEEKS} 周退休")
+        if added:
+            reasons.append("auto_new_word")
         keyword_db.setdefault("evolution_log", []).append({
             "date": today,
             "added": added,
             "retired": retired,
-            "reason": (
-                f"yield_rate < {_MIN_YIELD_RATE} 连续 {_RETIRE_AFTER_WEEKS} 周"
-                if retired else "auto_new_word"
-            ),
+            "reason": "; ".join(reasons),
         })
 
     # CLAUDE.md 约束：修改必须更新 version 和 last_updated

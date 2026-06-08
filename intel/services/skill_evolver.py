@@ -5,7 +5,9 @@ CIOSH 情报雷达 · Skill 进化层
 """
 
 import json
+import os
 import sys
+import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -13,6 +15,30 @@ from typing import Any
 _INTEL_DIR = Path(__file__).resolve().parent.parent
 if str(_INTEL_DIR) not in sys.path:
     sys.path.insert(0, str(_INTEL_DIR))
+
+
+def _atomic_json_write(path: Path, data: dict) -> None:
+    """写入 JSON 文件，使用临时文件 + os.replace 保证原子性。"""
+    with tempfile.NamedTemporaryFile(
+        "w", dir=path.parent, encoding="utf-8", suffix=".tmp", delete=False
+    ) as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+        tmp_path = f.name
+    os.replace(tmp_path, str(path))
+
+
+def _load_evolver_state(skills_dir: Path) -> dict:
+    state_path = skills_dir / "_evolver_state.json"
+    if state_path.exists():
+        try:
+            return json.loads(state_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {}
+
+
+def _save_evolver_state(skills_dir: Path, state: dict) -> None:
+    _atomic_json_write(skills_dir / "_evolver_state.json", state)
 
 
 # ─── 第二层：Filter Skill ──────────────────────────────────────────────────────
@@ -37,7 +63,7 @@ def evolve_layer2_rules(conn, skills_dir: Path) -> None:
         return
 
     # 读取当前版本
-    versions = sorted(rules_dir.glob("v*.json"), key=lambda p: int(p.stem[1:]))
+    versions = sorted(rules_dir.glob("v*.json"), key=lambda p: int(p.stem[1:]) if p.stem[1:].isdigit() else -1)
     if not versions:
         print("  [skill_evolver] Layer2: 找不到规则文件，跳过")
         return
@@ -49,28 +75,25 @@ def evolve_layer2_rules(conn, skills_dir: Path) -> None:
     total_high_score = sum(1 for r in rows if r["layer2_score"] >= 2)
     effective_rate = high_med / total_high_score if total_high_score > 0 else 0.0
 
-    # 读取连续低效周数（存在 evolution_log 里）
-    low_weeks = current.get("consecutive_low_weeks", 0)
+    # 读取连续低效周数（存储在 skills/_evolver_state.json，避免污染规则文件）
+    state = _load_evolver_state(skills_dir)
+    low_weeks = state.get("layer2_consecutive_low_weeks", 0)
     if effective_rate < 0.2:
         low_weeks += 1
     else:
         low_weeks = 0
+    state["layer2_consecutive_low_weeks"] = low_weeks
+    _save_evolver_state(skills_dir, state)
 
     if low_weeks < 3:
-        # 未达退化门槛，只更新计数
-        current["consecutive_low_weeks"] = low_weeks
-        with open(versions[-1], "w", encoding="utf-8") as f:
-            json.dump(current, f, ensure_ascii=False, indent=2)
         print(f"  [skill_evolver] Layer2: 有效命中率 {effective_rate:.1%}，连续低效 {low_weeks}/3 周")
         return
 
     # 达到 3 周：写入降权版本
     new_version = int(versions[-1].stem[1:]) + 1
-    # 降权：signal_terms 权重从 +1 降为 +0.5（通过缩短列表体现，记录 evolution_note）
     new_rules = dict(current)
     new_rules["version"] = new_version
     new_rules["generated_at"] = datetime.now().strftime("%Y-%m-%d")
-    new_rules["consecutive_low_weeks"] = 0
     new_rules["evolution_note"] = (
         f"v{new_version}: signal_terms 连续3周有效命中率 {effective_rate:.1%} < 20%，"
         f"已记录待人工审核（自动版本保存）"
@@ -80,10 +103,12 @@ def evolve_layer2_rules(conn, skills_dir: Path) -> None:
         "effective_rate": round(effective_rate, 4),
         "action": "version_bump_low_effective_rate",
     })
+    # 重置状态计数
+    state["layer2_consecutive_low_weeks"] = 0
+    _save_evolver_state(skills_dir, state)
 
     new_path = rules_dir / f"v{new_version}.json"
-    with open(new_path, "w", encoding="utf-8") as f:
-        json.dump(new_rules, f, ensure_ascii=False, indent=2)
+    _atomic_json_write(new_path, new_rules)
     print(f"  [skill_evolver] Layer2: 写入 {new_path.name}（有效命中率 {effective_rate:.1%}）")
 
 
@@ -137,6 +162,8 @@ def evolve_analyzer_prompt(conn, skills_dir: Path) -> None:
     except Exception as e:
         print(f"  [skill_evolver] Analyzer: DeepSeek 调用失败 — {e}")
         return
+
+    raw = raw[:2000]  # 防止异常长响应写入大文件
 
     week_label = datetime.now().strftime("%G-W%V")
     out_path = proposals_dir / f"{week_label}.md"
@@ -195,6 +222,8 @@ def evolve_category_briefs(conn, skills_dir: Path) -> None:
             print(f"  [skill_evolver] Category {cat}: DeepSeek 失败 — {e}")
             continue
 
+        summary = summary[:500]  # 防止异常长响应写入大文件
+
         brief_path = briefs_dir / f"{cat}.md"
 
         # 每 4 周做浓缩重写（保留近 4 周内容，其余浓缩为一段）
@@ -205,6 +234,7 @@ def evolve_category_briefs(conn, skills_dir: Path) -> None:
                     "你是 CIOSH 品类分析师。",
                     f"以下是 {cat} 品类的历史简报，请浓缩为≤200字的结构化摘要：\n\n{existing[:2000]}",
                 )
+                condensed = condensed[:500]  # 防止异常长响应
                 brief_path.write_text(
                     f"# {cat} · 品类情报简报\n\n"
                     f"## 月度浓缩（截至 {week_label}）\n{condensed}\n\n"
@@ -247,7 +277,7 @@ def refresh_skill_summary(conn, keyword_db_path: Path, skills_dir: Path) -> None
 
     # 当前 prompt 版本
     prompt_dir = skills_dir / "analyzer_prompt"
-    versions = sorted(prompt_dir.glob("v*.md"), key=lambda p: int(p.stem[1:]))
+    versions = sorted(prompt_dir.glob("v*.md"), key=lambda p: int(p.stem[1:]) if p.stem[1:].isdigit() else -1)
     prompt_ver = versions[-1].name if versions else "v1.md（未找到）"
 
     # 本周品类热度

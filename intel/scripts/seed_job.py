@@ -9,6 +9,7 @@ CIOSH 情报雷达 · 一次性历史回溯采集（仅运行一次）
 
 import hashlib
 import json
+import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -66,8 +67,10 @@ def _write_seed_items(items: list[dict], conn) -> int:
             ))
             if cur.rowcount:
                 written += 1
+        except sqlite3.IntegrityError:
+            pass
         except Exception as e:
-            print(f"  写入跳过：{(item.get('title') or '')[:40]} — {e}")
+            print(f"  写入错误：{(item.get('title') or '')[:40]} — {e}")
     conn.commit()
     return written
 
@@ -114,10 +117,11 @@ def main() -> None:
     passed_l2, rejected_l2 = filter_by_layer2(new_items)
     print(f"Layer2 过滤：通过 {len(passed_l2)} 条，过滤 {len(rejected_l2)} 条")
 
-    # Layer3 分析（保守上限 20 条，遵守 token 纪律）
-    limit = cfg.MAX_LAYER3_PER_DAY
-    print(f"Layer3 分析（上限 {limit} 条）...")
-    analyzed = batch_analyze(passed_l2, limit=limit)
+    # Layer3 分析（seed 专用上限，与每日限额解耦）
+    limit = cfg.SEED_LAYER3_CAP
+    passed_l2_capped = sorted(passed_l2, key=lambda x: x.get("layer2_score", 0), reverse=True)[:limit]
+    print(f"Layer3 分析（seed 上限 {limit} 条）...")
+    analyzed = batch_analyze(passed_l2_capped)
     print(f"AI 分析完成：{len(analyzed)} 条")
 
     # 写库

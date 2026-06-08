@@ -22,6 +22,9 @@ _UA = (
     "Chrome/124.0.0.0 Safari/537.36"
 )
 
+# 百度时间范围参数（tbs）映射
+_BAIDU_TBS = {1: "qdr:d", 7: "qdr:w", 30: "qdr:m", 90: "qdr:y"}
+
 
 # ─── 百度新闻 ──────────────────────────────────────────────────────────────────
 
@@ -31,7 +34,8 @@ def search_baidu(word: str, date_range_days: int = 1, max_results: int = 5) -> l
         import requests
         from bs4 import BeautifulSoup
 
-        url = f"https://www.baidu.com/s?tn=news&rn=20&word={quote(word)}&tbs=qdr:d"
+        tbs = _BAIDU_TBS.get(date_range_days, "qdr:d")
+        url = f"https://www.baidu.com/s?tn=news&rn=20&word={quote(word)}&tbs={tbs}"
         headers = {
             "User-Agent": _UA,
             "Accept-Language": "zh-CN,zh;q=0.9",
@@ -105,15 +109,7 @@ def search_zhihu(word: str, date_range_days: int = 1, max_results: int = 5) -> l
             return []
 
         data = json.loads(script.string)
-        # 知乎搜索结果路径（结构可能随版本变动）
-        items_raw = (
-            data.get("props", {})
-                .get("pageProps", {})
-                .get("initialState", {})
-                .get("entities", {})
-                .get("answers", {})
-        )
-        # 备选路径：searchResult
+        # 知乎搜索结果路径
         search_result = (
             data.get("props", {})
                 .get("pageProps", {})
@@ -173,11 +169,22 @@ def search_bilibili(word: str, date_range_days: int = 1, max_results: int = 5) -
     try:
         from bilibili_api import search
 
-        result = asyncio.run(search.search_by_type(
-            keyword=word,
-            search_type=search.SearchObjectType.ARTICLE,
-            page=1,
-        ))
+        async def _do_search():
+            return await search.search_by_type(
+                keyword=word,
+                search_type=search.SearchObjectType.ARTICLE,
+                page=1,
+            )
+
+        try:
+            result = asyncio.run(_do_search())
+        except RuntimeError:
+            # 已有运行中的事件循环（如 Jupyter 环境）
+            loop = asyncio.new_event_loop()
+            try:
+                result = loop.run_until_complete(_do_search())
+            finally:
+                loop.close()
 
         cutoff_ts = int((datetime.now() - timedelta(days=date_range_days + 1)).timestamp())
         items = result.get("result") or result.get("data", {}).get("result") or []
@@ -220,9 +227,15 @@ def search_bilibili(word: str, date_range_days: int = 1, max_results: int = 5) -
 def search_all_domestic(
     word: str, date_range_days: int = 1, max_results_each: int = 5
 ) -> list[dict]:
-    """顺序调用三通道并合并结果，任一失败不影响其他。"""
+    """
+    顺序调用国内通道并合并结果，任一失败不影响其他。
+
+    停用说明（2026-06-08）：知乎 / B站可信度评估不达标，已从调用链移除。
+    search_zhihu / search_bilibili 函数体保留在本模块内，可单独调用验证；
+    若未来重新启用，只需把它们加回下面的 fn 元组即可，无需重写。
+    """
     results = []
-    for fn in (search_baidu, search_zhihu, search_bilibili):
+    for fn in (search_baidu,):   # 原为 (search_baidu, search_zhihu, search_bilibili)
         results.extend(fn(word, date_range_days=date_range_days, max_results=max_results_each))
         time.sleep(1)   # 礼貌性间隔，避免触发反爬
     return results

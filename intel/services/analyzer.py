@@ -52,7 +52,7 @@ def _load_system_prompt() -> str:
     skills_dir = _INTEL_DIR / "skills" / "analyzer_prompt"
     if not skills_dir.exists():
         return _DEFAULT_SYSTEM_PROMPT
-    versions = sorted(skills_dir.glob("v*.md"), key=lambda p: int(p.stem[1:]))
+    versions = sorted(skills_dir.glob("v*.md"), key=lambda p: int(p.stem[1:]) if p.stem[1:].isdigit() else -1)
     if not versions:
         return _DEFAULT_SYSTEM_PROMPT
     content = versions[-1].read_text(encoding="utf-8")
@@ -100,16 +100,16 @@ def _parse_json_from_text(text: str) -> dict[str, Any]:
     s = text.strip()
     try:
         return json.loads(s)
-    except Exception:
+    except json.JSONDecodeError:
         pass
     if s.startswith("```"):
         lines = s.splitlines()
         if lines and lines[0].lstrip().startswith("```"):
             lines = lines[1:]
-        if lines and lines[-1].strip().startswith("```"):
+        if lines and lines[-1].strip() == "```":
             lines = lines[:-1]
         return json.loads("\n".join(lines).strip())
-    return json.loads(s)
+    raise ValueError(f"无法从响应中解析 JSON：{s[:100]}")
 
 
 def analyze_item(item: dict[str, Any]) -> dict[str, Any]:
@@ -188,12 +188,12 @@ def analyze_item(item: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def batch_analyze(items: list[dict[str, Any]], limit: int = 20) -> list[dict[str, Any]]:
+def batch_analyze(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
-    批量分析，跳过已标记 is_duplicate=1 的条目。
+    批量分析，跳过已标记 is_duplicate=1 的条目。Layer2 是唯一质量门槛，无数量上限。
     每 5 条打印进度，单条失败时跳过继续。
     """
-    to_process = [item for item in items if not item.get("is_duplicate", 0)][:limit]
+    to_process = [item for item in items if not item.get("is_duplicate", 0)]
     total = len(to_process)
     results = []
     for idx, item in enumerate(to_process, start=1):

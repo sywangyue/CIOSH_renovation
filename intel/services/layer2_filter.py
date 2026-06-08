@@ -25,7 +25,7 @@ def _load_rules() -> dict | None:
     skills_dir = _INTEL_DIR / "skills" / "layer2_rules"
     if not skills_dir.exists():
         return None
-    versions = sorted(skills_dir.glob("v*.json"), key=lambda p: int(p.stem[1:]))
+    versions = sorted(skills_dir.glob("v*.json"), key=lambda p: int(p.stem[1:]) if p.stem[1:].isdigit() else -1)
     if not versions:
         return None
     with open(versions[-1], encoding="utf-8") as f:
@@ -41,7 +41,7 @@ _CATEGORY_TERMS_DEFAULT = [
     "EHS", "PPE", "劳保", "安全帽", "防护服", "工业安全", "安全生产",
     "职业健康", "可穿戴", "智能安全", "安全传感", "传感器", "消防",
     "应急", "监测仪", "气体检测", "防坠落", "高空作业", "危化品",
-    "职业病", "安全设备", "防护装备", "噪声防护", "环境监测", "防护",
+    "职业病", "安全设备", "防护装备", "噪声防护", "环境监测",
     # 英文
     "safety", "protective", "hazard", "occupational", "wearable",
     "fall protection", "fire protection",
