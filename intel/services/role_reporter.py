@@ -138,7 +138,7 @@ def _priority_badge(priority: str) -> str:
 def _category_tag(category: str) -> str:
     label = _CATEGORY_NAMES.get(category, category)
     return (
-        f'<span style="font-size:12px;color:{GREEN};background:#e8f5e9;'
+        f'<span style="font-size:12px;color:{GREEN};'
         f'padding:1px 6px;border-radius:3px;font-family:{FONT};">{label}</span>'
     )
 
@@ -178,11 +178,11 @@ def _item_row_c(item: dict[str, Any], seq_num: int) -> str:
 def _priority_block(
     items: list[dict[str, Any]],
     border_color: str,
-    bg_color: str,
+    label: str,
     seq_start: int,
 ) -> tuple[str, int]:
     """
-    Wraps items in a left-border colored block for Part B.
+    Wraps items in a left-border block with a block-level label (e.g. "HIGH"/"MEDIUM").
     Returns (html_str, next_seq_num).
     If items is empty, returns ("", seq_start) — no wrapper div rendered.
     """
@@ -194,8 +194,9 @@ def _priority_block(
         is_last = (i == len(items) - 1)
         rows.append(_item_row_b(item, seq_num, is_last))
     block = (
-        f'<div style="border-left:4px solid {border_color};'
-        f'background:{bg_color};padding:4px 12px;margin-bottom:12px;">'
+        f'<div style="border-left:4px solid {border_color};padding:4px 12px;margin-bottom:12px;">'
+        f'<div style="font-size:10px;font-weight:bold;color:{border_color};'
+        f'letter-spacing:0.12em;margin-bottom:6px;font-family:{FONT};">{label}</div>'
         + "".join(rows)
         + f'</div>'
     )
@@ -230,7 +231,7 @@ def _keyword_section(
         )
     kw_table = (
         f'<table style="width:100%;border-collapse:collapse;">'
-        f'<tr style="background:{GRAY_BG};">'
+        f'<tr>'
         f'<th style="padding:6px 8px;text-align:left;font-size:12px;">关键词</th>'
         f'<th style="padding:6px 8px;text-align:right;font-size:12px;">总命中</th>'
         f'<th style="padding:6px 8px;text-align:right;font-size:12px;">高质量</th>'
@@ -242,7 +243,7 @@ def _keyword_section(
     if retired:
         tags = "".join(
             f'<span style="display:inline-block;margin:3px;padding:4px 10px;'
-            f'background:{GRAY_BG};color:{MUTED};border-radius:3px;font-size:13px;'
+            f'border:1px solid {BORDER};color:{MUTED};border-radius:3px;font-size:13px;'
             f'text-decoration:line-through;font-family:{FONT};">{_html.escape(w)}</span>'
             for w in retired
         )
@@ -325,9 +326,9 @@ def build_unified_html(
     high_sorted = sorted(high_items, key=lambda x: x.get("source_keyword") or "")
     med_sorted  = sorted(med_items,  key=lambda x: x.get("source_keyword") or "")
 
-    b_green_html,  seq_after_high = _priority_block(high_sorted, GREEN,  LIGHT_GREEN,  1)
-    b_orange_html, seq_after_med  = _priority_block(med_sorted,  ORANGE, LIGHT_ORANGE, seq_after_high)
-    b_gray_html,   seq_after_b    = _priority_block(low_items,   MUTED,  GRAY_BG,      seq_after_med)
+    b_green_html,  seq_after_high = _priority_block(high_sorted, GREEN,  "HIGH",   1)
+    b_orange_html, seq_after_med  = _priority_block(med_sorted,  ORANGE, "MEDIUM", seq_after_high)
+    seq_after_b = seq_after_med
 
     part_b = (
         f'<div style="padding:0 20px;">'
@@ -335,21 +336,18 @@ def build_unified_html(
         + _section_label("B &nbsp; 重点情报")
         + b_green_html
         + b_orange_html
-        + b_gray_html
         + f'</div>'
     )
 
     # ── Part C：其他情报 ──────────────────────────────────────────────────────
-    # NOTE: low_items are now also shown in Part B gray block.
-    # Part C shows "unknown" priority items not captured by high/med/low filters.
-    unknown_items = [
+    c_items = [
         i for i in items
-        if (i.get("priority") or "").lower() not in ("high", "medium", "low")
+        if (i.get("priority") or "").lower() not in ("high", "medium")
     ]
-    if unknown_items:
+    if c_items:
         c_rows = "".join(
             _item_row_c(item, seq_after_b + idx)
-            for idx, item in enumerate(unknown_items)
+            for idx, item in enumerate(c_items)
         )
         part_c_body = c_rows
     else:
@@ -385,8 +383,7 @@ def build_unified_html(
 
     # ── Footer ────────────────────────────────────────────────────────────────
     footer = (
-        f'<div style="background:{GRAY_BG};border-top:1px solid {BORDER};'
-        f'padding:12px 20px;text-align:center;">'
+        f'<div style="border-top:1px solid {BORDER};padding:12px 20px;text-align:center;">'
         f'<span style="font-size:12px;color:{MUTED};font-family:{FONT};">'
         f'CIOSH 情报雷达 · 自动生成</span>'
         f'</div>'
@@ -396,9 +393,9 @@ def build_unified_html(
         f'<!DOCTYPE html><html lang="zh-CN">'
         f'<head><meta charset="utf-8"/>'
         f'<title>CIOSH情报{kind_label} {date_or_week_label}</title></head>'
-        f'<body style="margin:0;padding:0;background:{GRAY_BG};">'
+        f'<body style="margin:0;padding:0;">'
         f'<table width="100%" cellpadding="0" cellspacing="0" border="0"'
-        f' style="background:{GRAY_BG};padding:20px 0;">'
+        f' style="padding:20px 0;">'
         f'<tr><td align="center">'
         f'<table width="620" cellpadding="0" cellspacing="0" border="0"'
         f' style="background:{WHITE};border-radius:4px;overflow:hidden;max-width:620px;">'
