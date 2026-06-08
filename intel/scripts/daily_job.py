@@ -7,10 +7,12 @@ CIOSH 情报雷达 · 每日任务（8步流程）
 import hashlib
 import json
 import os
+import re
 import sqlite3
 import sys
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 
 _INTEL_DIR = Path(__file__).resolve().parent.parent
@@ -117,22 +119,54 @@ def _update_keyword_hits(
     os.replace(tmp_path, str(path))
 
 
+def _parse_pub_date(pub_date: str, url: str) -> datetime | None:
+    """
+    尝试从 pub_date 字符串解析日期；若为空则从 URL 路径中提取 YYYYMM 或 YYYY-MM-DD 模式。
+    返回 naive datetime（本地时区），无法解析时返回 None。
+    """
+    raw = (pub_date or "").strip()
+    if raw:
+        # ISO 8601 格式
+        for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
+            try:
+                return datetime.strptime(raw, fmt)
+            except ValueError:
+                continue
+        # RFC 822 格式（Tavily 返回的 "Sun, 07 Jun 2026 22:11:35 GMT"）
+        try:
+            dt = parsedate_to_datetime(raw)
+            return dt.astimezone(timezone.utc).replace(tzinfo=None)
+        except Exception:
+            pass
+
+    # pub_date 为空时，从 URL 路径中提取日期（政府/新闻网站常见模式）
+    # 匹配 /YYYYMMDD/ 或 /YYYYMM/ 路径片段，要求年份 2000–2099
+    m = re.search(r"/20(\d{2})(0[1-9]|1[0-2])(\d{2})/", url)
+    if m:
+        try:
+            return datetime(int("20" + m.group(1)), int(m.group(2)), int(m.group(3)))
+        except ValueError:
+            pass
+    m = re.search(r"/20(\d{2})(0[1-9]|1[0-2])/", url)
+    if m:
+        return datetime(int("20" + m.group(1)), int(m.group(2)), 1)
+
+    return None
+
+
 def _filter_by_pub_date(items: list[dict]) -> tuple[list[dict], int]:
-    """过滤发布日期超过 MAX_PUB_AGE_DAYS 天的条目；无法解析日期的条目保留。"""
+    """
+    过滤发布日期超过 MAX_PUB_AGE_DAYS 天的条目。
+
+    日期来源优先级：
+    1. pub_date 字段（ISO 8601 或 RFC 822）
+    2. URL 路径中的 YYYYMMDD 或 YYYYMM 模式（政府/新闻站常见）
+    3. 两者均无法解析时：保留（宁可误收，不漏真新闻）
+    """
     cutoff = datetime.now() - timedelta(days=MAX_PUB_AGE_DAYS)
     fresh, stale_count = [], 0
     for item in items:
-        pub_date = (item.get("pub_date") or "").strip()
-        if not pub_date:
-            fresh.append(item)
-            continue
-        parsed = None
-        for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
-            try:
-                parsed = datetime.strptime(pub_date, fmt)
-                break
-            except ValueError:
-                continue
+        parsed = _parse_pub_date(item.get("pub_date", ""), item.get("url", ""))
         if parsed is None:
             fresh.append(item)
         elif parsed >= cutoff:
