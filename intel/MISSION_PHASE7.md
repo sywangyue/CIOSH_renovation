@@ -1,8 +1,9 @@
-# CIOSH Intel Radar — Execution Mission: Phase 7
+# CIOSH Intel Radar — Execution Mission: Phase 7 (v2)
 
 > **Executor:** Claude Code
 > **Reviewer:** Cowork Claude (secondary verification after completion)
-> **Pre-read required:** `CLAUDE.md` + `skills/SKILL.md` + `../2026-06-04_S09_intel_radar_design.md` Section 11 Phase 7
+> **Pre-read required:** `CLAUDE.md` + `skills/SKILL.md` + `../docs/2026-06-04_S10_intel_radar_design.md` Section 11 Phase 7
+> **This is v2:** Adds multi-role email (Task 7-F), removes Layer3 cap (Task 7-B update), removes 小红书
 > **Working directory:** All files in `ciosh/intel/` unless stated otherwise
 > **Pre-condition:** Phase 0–6 complete and running stably
 
@@ -120,26 +121,78 @@ for fn, name in [(search_baidu,'baidu'),(search_zhihu,'zhihu'),(search_bilibili,
 
 ---
 
-## Task 7-B: Wire `daily_job.py` to use domestic channel
+## Task 7-B: Wire `daily_job.py` — domestic channels + remove Layer3 cap + role digest
 
-In `scripts/daily_job.py`, find Step 2 (search). Add domestic search alongside Tavily:
+In `scripts/daily_job.py`, make three changes:
 
+**Change 1 — Multi-channel search (Step 2):**
 ```python
-# Step 2: multi-channel search
 from services.searcher import search_keywords
 from services.domestic_searcher import search_all_domestic
 
 tavily_results = search_keywords(active_keywords, days_back=1)
-
 domestic_results = []
 for kw in active_keywords:
     domestic_results.extend(search_all_domestic(kw, date_range_days=1, max_results_each=3))
-
 raw_results = tavily_results + domestic_results
-print(f"Step 2完成：Tavily {len(tavily_results)} 条 + 国内通道 {len(domestic_results)} 条 = {len(raw_results)} 条")
+print(f"Step 2: Tavily {len(tavily_results)} + 国内 {len(domestic_results)} = {len(raw_results)} 条")
 ```
 
-**Constraint:** domestic max_results_each=3 (not 5) to keep total volume manageable. Layer3 hard cap remains 20.
+**Change 2 — Replace hard cap with Bucket Cap:**
+
+In `scripts/daily_job.py` Step 5, replace the simple `batch_analyze(passed_items)` call with bucket logic:
+
+```python
+def _bucket_cap(items: list[dict], cap_tavily: int, cap_domestic: int) -> list[dict]:
+    """Split by source_channel, sort by layer2_score desc, take Top N each bucket."""
+    tavily = sorted([i for i in items if i.get('source_channel','') == 'tavily'],
+                    key=lambda x: x.get('layer2_score', 0), reverse=True)[:cap_tavily]
+    domestic = sorted([i for i in items if i.get('source_channel','') != 'tavily'],
+                      key=lambda x: x.get('layer2_score', 0), reverse=True)[:cap_domestic]
+    return tavily + domestic
+
+cap_tavily  = int(os.getenv('LAYER3_CAP_TAVILY', '15'))
+cap_domestic = int(os.getenv('LAYER3_CAP_DOMESTIC', '25'))
+to_analyze = _bucket_cap(layer2_passed, cap_tavily, cap_domestic)
+print(f"Step 5 bucket: Tavily {sum(1 for i in to_analyze if i.get('source_channel')=='tavily')} "
+      f"+ 国内 {sum(1 for i in to_analyze if i.get('source_channel')!='tavily')} 条进入Layer3")
+analyzed_items = batch_analyze(to_analyze)
+```
+
+Add `import os` at top of daily_job.py if not already present.
+`_bucket_cap` is a local helper function defined inside `run_daily()` or at module level — keep it simple, no separate file.
+
+Also update `config.py`: add two new fields:
+```python
+LAYER3_CAP_TAVILY:   int = int(os.getenv('LAYER3_CAP_TAVILY', '15'))
+LAYER3_CAP_DOMESTIC: int = int(os.getenv('LAYER3_CAP_DOMESTIC', '25'))
+```
+
+**Verify bucket logic:**
+```python
+# After running daily_job.py, check the Step 5 log line:
+# Expected: "Step 5 bucket: Tavily X + 国内 Y 条进入Layer3" where X<=15, Y<=25
+```
+
+**Change 3 — Role digest call (Step 6.5, NEW):**
+After batch_analyze, before building reports, call:
+```python
+from services.role_reporter import synthesize_role_digests
+role_digests = synthesize_role_digests(analyzed_items)  # single DeepSeek call
+# role_digests = {sales_digest: str, market_digest: str, ops_digest: str}
+```
+
+**Change 4 — Single unified email (Step 7-8):**
+```python
+from services.role_reporter import build_unified_html
+from services.mailer import send_report
+
+html = build_unified_html(analyzed_items, role_digests, today)
+send_report(
+    subject=f'[CIOSH情报] {today} · {len(analyzed_items)}条',
+    html_body=html
+)  # uses MAIL_TO + MAIL_CC from config, no changes needed
+```
 
 ---
 
@@ -290,17 +343,209 @@ Each call wrapped in try/except — failure prints error and continues, never ab
 
 ---
 
+---
+
+## Task 7-F: `services/role_reporter.py` (REVISED)
+
+One file, two functions. **One unified HTML email** covering all three roles — no separate templates.
+
+---
+
+### `synthesize_role_digests(items: list[dict]) -> dict`
+
+Single DeepSeek call. Input: day's `priority=high` or `priority=medium` analyzed items (max 30 for this call).
+
+**System prompt (exact):**
+```
+你是CIOSH情报雷达的报告合成器。基于当日情报，为三个角色各生成一段≤200字的中文摘要。
+每段摘要必须用多行bullet points格式（每条以"• "开头），禁止段落文字。
+销售：聚焦哪些具体品类/行业有展商机会，以及对应的销售切入点。
+市场：聚焦行业市场价值、趋势数据、可用于客户沟通的市场话术。
+运营：聚焦论坛主题方向、新品类与现有展会结构的整合建议。
+```
+
+**Output JSON (strict):**
+```json
+{
+  "sales_digest": "• 第一条\n• 第二条\n• 第三条",
+  "market_digest": "• 第一条\n• 第二条",
+  "ops_digest": "• 第一条\n• 第二条"
+}
+```
+
+Fallback: if items < 3 or API fails, return `{"sales_digest":"","market_digest":"","ops_digest":""}`.
+
+---
+
+### `build_unified_html(items: list[dict], role_digests: dict, date_str: str) -> str`
+
+Returns a single complete HTML string (inline CSS, no external deps).
+
+**Color constants (must use exactly, no other colors):**
+```python
+GREEN  = "#009040"   # CIOSH brand green — headers, HIGH badge, links
+ORANGE = "#f39700"   # CIOSH brand orange — MED badge, market section accent
+DARK   = "#221b19"   # body text
+WHITE  = "#ffffff"
+GRAY_BG= "#f5f5f5"   # section backgrounds
+BORDER = "#e0e0e0"   # dividers
+MUTED  = "#999999"   # LOW priority text, meta info
+FONT   = "'Helvetica Neue',Helvetica,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',Arial,sans-serif"
+```
+
+**Email HTML structure (implement in this exact order):**
+
+```
+[Header]
+  Background: GREEN | Text: WHITE
+  Left: "CIOSH 情报雷达" (18px bold) | Right: date_str + " · N条"
+
+[Part A — 角色摘要]
+  Section title: "A  角色摘要" — 13px, MUTED, uppercase letter-spacing
+  Three role blocks side by side (or stacked on narrow clients):
+
+  [销售视角]              [市场视角]              [运营视角]
+  Border-left: GREEN     Border-left: ORANGE    Border-left: GREEN
+  Title: 13px bold DARK  Title: 13px bold DARK  Title: 13px bold DARK
+  Content: bullet lines  Content: bullet lines  Content: bullet lines
+  (14px, DARK, line-height 1.6)
+  If digest is empty: show "今日数据不足，暂无摘要" in MUTED
+
+  Helper: parse "• line1
+• line2" → render each as <div style="...">• line</div>
+
+[Divider: 1px solid BORDER]
+
+[Part B — 高/中优先级情报]
+  Section title: "B  重点情报" — 13px, MUTED
+  For each item where priority in ('high','medium'):
+    [Badge] HIGH → background GREEN, text WHITE, 11px
+            MED  → background ORANGE, text WHITE, 11px
+    [Category tag] 12px, color GREEN, background #e8f5e9
+    [Summary] item['summary_zh'] — 14px, DARK
+    [Link] "→ 查看原文" — GREEN, 13px, href=item['url']
+    Separator: 1px dashed BORDER between items
+
+[Divider: 1px solid BORDER]
+
+[Part C — 低优先级情报]
+  Section title: "C  其他情报" — 13px, MUTED
+  Compact list: for each item where priority == 'low':
+    <div>• <a href="{url}" style="color:{GREEN}">{title}</a>
+         <span style="color:{MUTED};font-size:12px"> [{category}]</span></div>
+
+[Footer]
+  Background: GRAY_BG | Border-top: 1px solid BORDER
+  Text: "CIOSH 情报雷达 · 自动生成" — 12px MUTED centered
+```
+
+**Verify:**
+```python
+import sys; sys.path.insert(0, '.')
+from services.role_reporter import synthesize_role_digests, build_unified_html
+items = [
+    {"title":"EHS智能安全帽IoT联网","priority":"high","category":"smart_ppe",
+     "summary_zh":"某公司发布可穿戴安全设备","url":"https://example.com","ciosh_action":"可引进智能PPE"},
+    {"title":"安全生产标准修订","priority":"medium","category":"policy_regulatory",
+     "summary_zh":"新国标正式实施","url":"https://example2.com","ciosh_action":""},
+    {"title":"某企业人事变动","priority":"low","category":"other",
+     "summary_zh":"某公司更换CEO","url":"https://example3.com","ciosh_action":""},
+]
+digests = synthesize_role_digests(items)
+html = build_unified_html(items, digests, "2026-06-05")
+assert "#009040" in html, "GREEN color missing"
+assert "#f39700" in html, "ORANGE color missing"
+assert "销售视角" in html
+assert "市场视角" in html
+assert "运营视角" in html
+assert "重点情报" in html
+assert "其他情报" in html
+print("OK, html length:", len(html))
+```
+
+---
+
+## Task 7-G: Update `daily_job.py` email step (REVISED)
+
+**Remove** the 3-route email loop added in Task 7-B Change 4.
+**Replace** with single unified send:
+
+```python
+from services.role_reporter import build_unified_html, synthesize_role_digests
+
+# Step 6.5: role digest (single DeepSeek call)
+role_digests = synthesize_role_digests(analyzed_items)
+
+# Step 7: one unified HTML
+html = build_unified_html(analyzed_items, role_digests, today)
+
+# Step 8: send once
+send_report(
+    subject=f"[CIOSH情报] {today} · {len(analyzed_items)}条",
+    html_body=html
+)
+# send_report already reads MAIL_TO and MAIL_CC from config — no changes to config.py needed
+```
+
+**Also remove** `MAIL_TO_SALES`, `MAIL_TO_MARKET`, `MAIL_TO_OPS` from `config.py` if they were added in any previous step. Keep only `MAIL_TO` + `MAIL_CC`.
+
+---
+
 ## Deliverables Checklist
 
 ```
-[ ] services/domestic_searcher.py  — 3 channels + unified entry
-[ ] daily_job.py updated           — domestic channel wired in Step 2
+[ ] services/domestic_searcher.py  — 3 channels (baidu/zhihu/bilibili) + unified entry
+[ ] services/role_reporter.py      — synthesize_role_digests + build_unified_html (CIOSH colors)
+[ ] daily_job.py updated           — domestic channels + no Layer3 cap + role digest + single send
 [ ] analyzer.py updated            — prompt loaded from skills/analyzer_prompt/
 [ ] layer2_filter.py updated       — rules loaded from skills/layer2_rules/
 [ ] services/skill_evolver.py      — 4 evolution functions
 [ ] weekly_job.py updated          — skill_evolver calls wired in
-[ ] Phase 7 manual run output      — see verification below
+[ ] config.py verified             — only MAIL_TO + MAIL_CC, no role-specific fields
+[ ] Phase 7 manual run output      — write to MISSION_PHASE7_RESULT.md
 ```
+
+## Phase 7 Verification
+
+```bash
+cd /path/to/ciosh/intel
+
+# Test domestic channels
+python -c "
+from services.domestic_searcher import search_baidu, search_zhihu, search_bilibili
+for fn, name in [(search_baidu,'baidu'),(search_zhihu,'zhihu'),(search_bilibili,'bilibili')]:
+    r = fn('EHS管理', max_results=2)
+    print(f'{name}: {len(r)} results')
+"
+
+# Test unified HTML email
+python -c "
+from services.role_reporter import synthesize_role_digests, build_unified_html
+items = [{'title':'Test','priority':'high','category':'ehs_tech',
+          'summary_zh':'Test summary','url':'http://test.com','ciosh_action':'Test action'}]
+d = synthesize_role_digests(items)
+html = build_unified_html(items, d, '2026-06-05')
+assert '#009040' in html
+assert '销售视角' in html
+print('HTML OK, length:', len(html))
+"
+
+# Run full daily job (sends one email)
+python scripts/daily_job.py
+
+# Run weekly job
+python scripts/weekly_job.py
+
+# Check skills/ updated
+ls -la skills/analyzer_prompt/proposals/
+cat skills/SKILL.md | head -20
+```
+
+---
+
+*CIOSH Intel Radar · Execution Mission Phase 7 v2 · 2026-06-05*
+*Issued by: Cowork Claude | To be executed by: Claude Code*
+
 
 ## Phase 7 Verification Run
 
@@ -341,5 +586,5 @@ Cowork Claude will verify: channel coverage, SKILL.md freshness, proposal file e
 
 ---
 
-*CIOSH Intel Radar · Execution Mission Phase 7 · 2026-06-04*
+*CIOSH Intel Radar · Execution Mission Phase 7 v2 · 2026-06-05*
 *Issued by: Cowork Claude | To be executed by: Claude Code*

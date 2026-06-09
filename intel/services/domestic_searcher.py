@@ -126,6 +126,8 @@ def search_baidu(word: str, date_range_days: int = 1, max_results: int = 5) -> l
             if len(results) >= max_results:
                 break
 
+        if not results:
+            print(f"  [baidu] {word}: 0条 (HTTP {resp.status_code}, {len(resp.text)}B)")
         return results
     except Exception as e:
         print(f"  [baidu] {word}: 搜索失败 — {e}")

@@ -1,6 +1,6 @@
 {
-  "version": "2026-W23",
-  "last_updated": "2026-06-05",
+  "version": "2026-06-09",
+  "last_updated": "2026-06-09",
   "next_review": "2026-06-09",
   "keywords": [
     {
@@ -10,10 +10,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 16,
-      "hit_count_quality": 1,
+      "hit_count_total": 61,
+      "hit_count_quality": 5,
       "yield_rate": 0.5,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active",
       "low_yield_weeks": 0
     },
@@ -24,10 +24,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 16,
-      "hit_count_quality": 2,
+      "hit_count_total": 69,
+      "hit_count_quality": 7,
       "yield_rate": 0.6,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active",
       "low_yield_weeks": 0
     },
@@ -38,10 +38,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 1,
+      "hit_count_total": 68,
+      "hit_count_quality": 12,
       "yield_rate": 0.7778,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active",
       "low_yield_weeks": 0
     },
@@ -52,10 +52,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 1,
+      "hit_count_total": 57,
+      "hit_count_quality": 9,
       "yield_rate": 0.75,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active",
       "low_yield_weeks": 0
     },
@@ -66,10 +66,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 1,
+      "hit_count_total": 56,
+      "hit_count_quality": 15,
       "yield_rate": 0.3333,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active",
       "low_yield_weeks": 0
     },
@@ -80,10 +80,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 0,
+      "hit_count_total": 62,
+      "hit_count_quality": 7,
       "yield_rate": 0.1111,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active",
       "low_yield_weeks": 0
     },
@@ -94,10 +94,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 1,
+      "hit_count_total": 57,
+      "hit_count_quality": 9,
       "yield_rate": 0.5,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active",
       "low_yield_weeks": 0
     },
@@ -108,10 +108,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 1,
+      "hit_count_total": 56,
+      "hit_count_quality": 10,
       "yield_rate": 0.3333,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active",
       "low_yield_weeks": 0
     },
@@ -122,12 +122,12 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 1,
+      "hit_count_total": 1,
+      "hit_count_quality": 0,
       "yield_rate": 0.0,
       "last_hit": "2026-06-05",
       "status": "retired",
-      "low_yield_weeks": 2
+      "low_yield_weeks": 3
     },
     {
       "word": "防坠落系统",
@@ -136,10 +136,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 1,
+      "hit_count_total": 54,
+      "hit_count_quality": 5,
       "yield_rate": 1.0,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active",
       "low_yield_weeks": 0
     },
@@ -150,10 +150,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 0,
+      "hit_count_total": 66,
+      "hit_count_quality": 4,
       "yield_rate": 0.0,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active"
     },
     {
@@ -163,10 +163,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 2,
-      "yield_rate": 0.0,
-      "last_hit": "2026-06-05",
+      "hit_count_total": 66,
+      "hit_count_quality": 9,
+      "yield_rate": 0.1538,
+      "last_hit": "2026-06-09",
       "status": "active"
     },
     {
@@ -176,12 +176,12 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 1,
+      "hit_count_total": 1,
+      "hit_count_quality": 0,
       "yield_rate": 0.0,
       "last_hit": "2026-06-05",
-      "status": "active",
-      "low_yield_weeks": 1
+      "status": "retired",
+      "low_yield_weeks": 2
     },
     {
       "word": "环境监测设备",
@@ -190,10 +190,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 0,
+      "hit_count_total": 66,
+      "hit_count_quality": 10,
       "yield_rate": 0.0,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active"
     },
     {
@@ -203,10 +203,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 0,
+      "hit_count_total": 66,
+      "hit_count_quality": 7,
       "yield_rate": 0.0,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active"
     },
     {
@@ -216,10 +216,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
+      "hit_count_total": 66,
       "hit_count_quality": 0,
       "yield_rate": 0.0,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active"
     },
     {
@@ -229,10 +229,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 0,
+      "hit_count_total": 66,
+      "hit_count_quality": 3,
       "yield_rate": 0.0,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active"
     },
     {
@@ -242,10 +242,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 0,
+      "hit_count_total": 66,
+      "hit_count_quality": 4,
       "yield_rate": 0.0,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active"
     },
     {
@@ -255,10 +255,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 0,
+      "hit_count_total": 66,
+      "hit_count_quality": 5,
       "yield_rate": 0.0,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active"
     },
     {
@@ -268,10 +268,10 @@
       "lang": "en",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
+      "hit_count_total": 66,
       "hit_count_quality": 0,
       "yield_rate": 0.0,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active"
     },
     {
@@ -281,10 +281,10 @@
       "lang": "en",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 0,
+      "hit_count_total": 66,
+      "hit_count_quality": 6,
       "yield_rate": 0.0,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active"
     },
     {
@@ -294,10 +294,10 @@
       "lang": "en",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 0,
+      "hit_count_total": 66,
+      "hit_count_quality": 1,
       "yield_rate": 0.0,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active"
     },
     {
@@ -307,10 +307,10 @@
       "lang": "en",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
+      "hit_count_total": 63,
       "hit_count_quality": 0,
       "yield_rate": 0.0,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active"
     },
     {
@@ -320,10 +320,10 @@
       "lang": "en",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
-      "hit_count_quality": 0,
+      "hit_count_total": 63,
+      "hit_count_quality": 5,
       "yield_rate": 0.0,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active"
     },
     {
@@ -333,10 +333,10 @@
       "lang": "en",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 13,
+      "hit_count_total": 63,
       "hit_count_quality": 0,
       "yield_rate": 0.0,
-      "last_hit": "2026-06-05",
+      "last_hit": "2026-06-09",
       "status": "active"
     },
     {
@@ -346,10 +346,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 0,
-      "hit_count_quality": 0,
+      "hit_count_total": 45,
+      "hit_count_quality": 3,
       "yield_rate": 0.0,
-      "last_hit": null,
+      "last_hit": "2026-06-08",
       "status": "active"
     },
     {
@@ -359,10 +359,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 0,
-      "hit_count_quality": 0,
+      "hit_count_total": 45,
+      "hit_count_quality": 1,
       "yield_rate": 0.0,
-      "last_hit": null,
+      "last_hit": "2026-06-08",
       "status": "active"
     },
     {
@@ -372,10 +372,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 0,
+      "hit_count_total": 45,
       "hit_count_quality": 0,
       "yield_rate": 0.0,
-      "last_hit": null,
+      "last_hit": "2026-06-08",
       "status": "active"
     },
     {
@@ -385,10 +385,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 0,
+      "hit_count_total": 45,
       "hit_count_quality": 0,
       "yield_rate": 0.0,
-      "last_hit": null,
+      "last_hit": "2026-06-08",
       "status": "active"
     },
     {
@@ -398,10 +398,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 0,
-      "hit_count_quality": 0,
+      "hit_count_total": 45,
+      "hit_count_quality": 5,
       "yield_rate": 0.0,
-      "last_hit": null,
+      "last_hit": "2026-06-08",
       "status": "active"
     },
     {
@@ -411,10 +411,10 @@
       "lang": "zh",
       "added_at": "2026-06-04",
       "added_by": "seed",
-      "hit_count_total": 0,
-      "hit_count_quality": 0,
+      "hit_count_total": 45,
+      "hit_count_quality": 2,
       "yield_rate": 0.0,
-      "last_hit": null,
+      "last_hit": "2026-06-08",
       "status": "active"
     }
   ],
@@ -426,13 +426,19 @@
         "高空作业防护"
       ],
       "reason": "yield_rate < 0.05 连续 2 周"
+    },
+    {
+      "date": "2026-06-08",
+      "added": [],
+      "retired": [
+        "ISO 45001"
+      ],
+      "reason": "yield_rate < 0.05 连续 2 周"
     }
   ],
   "search_config": {
     "date_range_days": 1,
     "max_results_per_keyword": 5,
-    "search_provider": "tavily",
-    "max_layer3_per_day": 20,
     "layer2_min_score": 1
   },
   "retire_rules": {
